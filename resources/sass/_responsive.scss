@@ -1,0 +1,118 @@
+$break-900: 900px;
+$break-1000: 1000px;
+$break-1100: 1100px;
+$break-1200: 1200px;
+$break-1300: 1300px;
+$break-1400: 1400px;
+$break-1500: 1500px;
+
+@mixin respond-to($media) {
+  @if $media == mobile {
+    @media only screen and (max-width: $break-900) { @content; }
+  }
+  @else if $media == 900 {
+    @media only screen and (min-width: $break-900 + 1) and (max-width: $break-900) { @content; }
+  }
+  @else if $media == 1000 {
+    @media only screen and (min-width: $break-900 + 1) and (max-width: $break-1000) { @content; }
+  }
+  @if $media == 1100 {
+    @media only screen and (min-width: $break-1000 + 1) and (max-width: $break-1100) { @content; }
+  }
+  @else if $media == 1200 {
+    @media only screen and (min-width: $break-1100 + 1) and (max-width: $break-1200) { @content; }
+  }
+  @else if $media == 1300 {
+    @media only screen and (min-width: $break-1200 + 1) and (max-width: $break-1300) { @content; }
+  }
+  @else if $media == 1400 {
+    @media only screen and (min-width: $break-1300 + 1) and (max-width: $break-1400 - 1) { @content; }
+  }
+  @else if $media == 1500 {
+    @media only screen and (min-width: $break-1500) { @content; }
+  }
+  /*** For media queries that apply to all cateoriges and smaller **/
+  @else if $media == max1400 {
+    @media only screen and (max-width: $break-1400) { @content; }
+  }
+  @else if $media == max1300 {
+    @media only screen and (max-width: $break-1300) { @content; }
+  }
+  @else if $media == max1200 {
+    @media only screen and (max-width: $break-1200) { @content; }
+  }
+  @else if $media == max1100 {
+    @media only screen and (max-width: $break-1100) { @content; }
+  }
+  @else if $media == max1000 {
+    @media only screen and (max-width: $break-1000) { @content; }
+  }
+  @else if $media == max900 {
+    @media only screen and (max-width: $break-900) { @content; }
+  }
+}
+
+/* columns of same height styles */
+.container-xs-height {
+  display: table;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.row-xs-height {
+  display: table-row;
+}
+
+.col-xs-height {
+  display: table-cell;
+  float: none !important;
+  vertical-align: top;
+}
+
+@include respond-to(900) {
+  .container-sm-height {
+    display: table;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .row-sm-height {
+    display: table-row;
+  }
+  .col-sm-height {
+    display: table-cell;
+    float: none !important;
+    vertical-align: top;
+  }
+}
+
+@include respond-to(1000) {
+  .container-md-height {
+    display: table;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .row-md-height {
+    display: table-row;
+  }
+  .col-md-height {
+    display: table-cell;
+    float: none !important;
+    vertical-align: top;
+  }
+}
+
+@include respond-to(1200) {
+  .container-lg-height {
+    display: table;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .row-lg-height {
+    display: table-row;
+  }
+  .col-lg-height {
+    display: table-cell;
+    float: none !important;
+    vertical-align: top;
+  }
+}

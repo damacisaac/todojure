@@ -1,0 +1,85 @@
+.margin {
+    margin: 10px !important;
+}
+.margin-2x {
+    margin: 20px !important;
+}
+.margin-vertical {
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+}
+.margin-horizontal {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+}
+.margin-top {
+    margin-top: 10px !important;
+}
+.margin-top-2x {
+    margin-top: 20px !important;
+}
+.margin-top-3x {
+    margin-top: 30px !important;
+}
+.margin-top-4x {
+    margin-top: 40px !important;
+}
+.margin-top-5x {
+    margin-top: 50px !important;
+}
+.maring-top-minus-5px {
+    margin-top: -5px;
+}
+.margin-bottom {
+    margin-bottom: 10px !important;
+}
+.margin-left {
+    margin-left: 10px !important;
+}
+.margin-right {
+    margin-right: 10px !important;
+}
+.margin-vertical-progress-bar {
+    margin-top: 10px !important;
+    margin-bottom: 30px !important;
+}
+.margin-vertical-2x {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+.margin-horizontal-2x {
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+}
+.margin-top-2x {
+    margin-top: 20px !important;
+}
+.margin-bottom-half {
+    margin-bottom: 5px !important;
+}
+.margin-bottom-2x {
+    margin-bottom: 20px !important;
+}
+.margin-left-2x {
+    margin-left: 20px !important;
+}
+.margin-right-2x {
+    margin-right: 20px !important;
+}
+.no-margin {
+    margin: 0;
+}
+.no-margin-top {
+    margin-top: 0 !important;
+}
+.margin-top-3x {
+    margin-top: 30px !important;
+}
+.margin-top-6x {
+    margin-top: 60px !important;
+}
+@include respond-to(mobile) {
+    .mobile-no-margin {
+        margin: 0 !important;
+    }
+}

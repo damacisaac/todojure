@@ -1,0 +1,6 @@
+bower_components
+**/*.DS_Store
+node_modules
+target
+.lein-repl-history
+.nrepl-port
