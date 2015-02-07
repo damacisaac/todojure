@@ -4790,7 +4790,29 @@ button.close {
   .mobile-no-padding {
     padding: 0 !important; } }
 
+.todos {
+  width: 60vw;
+  height: 50vh; }
+
+.todos ul, .todo-card {
+  height: 100%; }
+
+.todo-card {
+  display: inline-block;
+  width: 300px;
+  vertical-align: top;
+  overflow-y: scroll; }
+
+* {
+  border: 1px solid #eee; }
+
+html, body {
+  height: 100%; }
+
 ul {
   list-style-type: none;
   margin: 0;
   padding: 0; }
+
+h2 {
+  margin: 0; }

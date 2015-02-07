@@ -1,0 +1,14 @@
+.todos {
+  width: 60vw;
+  height: 50vh;
+}
+.todos ul,
+.todo-card {
+  height: 100%;
+}
+.todo-card {
+  display: inline-block;
+  width: 300px;
+  vertical-align: top;
+  overflow-y: scroll;
+}

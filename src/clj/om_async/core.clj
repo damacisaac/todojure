@@ -1,5 +1,6 @@
 (ns om-async.core
-  (:require [ring.util.response :refer [file-response]]
+  (:require [om-async.util :as util]
+            [ring.util.response :refer [file-response]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.edn :refer [wrap-edn-params]]
             [compojure.core :refer [defroutes GET PUT POST DELETE]]
@@ -9,62 +10,75 @@
 (use '[datomic.api :only [q db] :as d])
 
 (def uri "datomic:free://localhost:4334/om_async")
+
 (def conn (d/connect uri))
 
 (defn index []
   (file-response "public/html/index.html" {:root "resources"}))
 
-(defn generate-response [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/edn"}
-   :body (pr-str data)})
+(defn merge-tempid [x]
+  (merge {:db/id (d/tempid :db.part/user)} x))
 
-(defn get-classes [db]
-  (->> (d/q '[:find ?class
+(defn create [data]
+  (let [data (merge-tempid data)]
+    (d/transact conn [data])
+    (util/generate-response {:status :ok :data data})))
+
+(defn delete [eid]
+  (d/transact conn [[:db.fn/retractEntity eid]])
+  (util/generate-response {:status :ok}))
+
+(defn update [params]
+  (d/transact conn [params])
+  (util/generate-response {:status :ok :data params}))
+
+(defn update-category [category]
+  (let [category (update-in category [:category/todos] #(map merge-tempid %))]
+    (update category)))
+
+(defn todo-to-edn [db id]
+  (let [todo (d/touch (d/entity db id))]
+    {:db/id (:db/id todo)
+     :todo/name (:todo/name todo)}))
+
+(defn category-to-edn [db id]
+  (let [category (d/touch (d/entity db id))]
+    {:db/id (:db/id category)
+     :category/name (:category/name category)
+     :category/todos (map #(todo-to-edn db (:db/id %)) (:category/todos category))}))
+
+(defn get-todos [db]
+  (->> (d/q '[:find ?todo
               :where
-              [?class :class/id]]
+              [?todo :todo/name]]
           db)
-       (map #(d/touch (d/entity db (first %))))
+       (map #(todo-to-edn db (first %)))
        vec))
 
-(defn init []
-  (generate-response
-     {:classes {:url "/classes" :coll (get-classes (d/db conn))}}))
+(defn todos []
+  (util/generate-response (get-todos (d/db conn))))
 
-(defn create-class [data]
-  (let [data (merge {:db/id (d/tempid :db.part/user)
-                     :class/id "Default id"
-                     :class/title "Default title"} data)]
-    (d/transact conn [data])
-    (generate-response {:status :ok})))
+(defn get-categories [db]
+  (->> (d/q '[:find ?category
+              :where
+              [?category :category/name]]
+          db)
+       (map #(category-to-edn db (first %)))
+       vec))
 
-(defn delete-class [eid]
-  (d/transact conn [[:db.fn/retractEntity eid]])
-  (generate-response {:status :ok}))
-
-(defn update-class [params]
-  (let [db    (d/db conn)
-        id (:class/id params)
-        title (:class/title params)
-        eid   (ffirst
-                (d/q '[:find ?class
-                       :in $ ?id
-                       :where
-                       [?class :class/id ?id]]
-                  db id))]
-    (d/transact conn [[:db/add eid :class/title title]])
-    (generate-response {:status :ok :class params})))
-
-(defn classes []
-  (generate-response (get-classes (d/db conn))))
+(defn categories []
+  (util/generate-response (get-categories (d/db conn))))
 
 (defroutes routes
   (GET "/" [] (index))
-  (GET "/init" [] (init))
-  (GET "/classes" [] (classes))
-  (POST "/classes" {params :edn-params} (create-class params))
-  (PUT "/classes" {params :edn-params} (update-class params))
-  (DELETE "/classes" {{id :db/id} :edn-params} (delete-class id))
+  (GET "/todos" [] (todos))
+  (POST "/todos" {params :edn-params} (create params))
+  (PUT "/todos" {params :edn-params} (update params))
+  (DELETE "/todos" {{id :db/id} :edn-params} (delete id))
+  (GET "/categories" [] (categories))
+  (POST "/categories" {params :edn-params} (create params))
+  (PUT "/categories" {params :edn-params} (update-category params))
+  (DELETE "/categories" {{id :db/id} :edn-params} (delete id))
   (route/files "/" {:root "resources/public"}))
 
 (defn wrap-log-request [handler]

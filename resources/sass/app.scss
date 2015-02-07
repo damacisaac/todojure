@@ -1,7 +1,17 @@
 @import 'base';
 
+* {
+  border: 1px solid #eee;
+}
+html, body {
+  height: 100%;
+}
 ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
+h2 {
+  margin: 0;
+}
+

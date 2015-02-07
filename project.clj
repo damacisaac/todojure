@@ -8,12 +8,13 @@
 
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/clojurescript "0.0-2173"]
+                 [org.clojure/tools.nrepl "0.2.3"]
                  [ring/ring "1.2.1"]
                  [ring/ring-jetty-adapter "1.2.1"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  [om "0.8.0-rc1"]
                  [om-sync "0.1.1"]
-                 [compojure "1.1.6"]
+                 [compojure "1.1.6" :exclusions [org.clojure/tools.nrepl]]
                  [fogus/ring-edn "0.2.0"]
                  [com.datomic/datomic-free "0.9.4699"]]
 

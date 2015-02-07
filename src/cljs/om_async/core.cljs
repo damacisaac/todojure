@@ -9,10 +9,13 @@
 (enable-console-print!)
 
 (def app-state
-  (atom {:classes []}))
+  (atom {:categories []}))
 
-(defn classes []
-  (om/ref-cursor (:classes (om/root-cursor app-state))))
+(defn categories []
+  (om/ref-cursor (:categories (om/root-cursor app-state))))
+
+(defn todos [category]
+  (om/ref-cursor (:category/todos category)))
 
 (defn display [show]
   (if show
@@ -26,31 +29,32 @@
   (om/set-state! owner :editing false)
   (cb text))
 
-(defn on-edit [id title]
+(defn on-edit [todo name]
   (util/edn-xhr
     {:method :put
-     :url "classes"
-     :data {:class/id id :class/title title}
+     :url "todos"
+     :data {:db/id (:db/id todo) :todo/name name}
      :on-complete #()}))
 
-(defn on-delete [data delete]
-  (om/transact! (classes) (fn [xs] (vec (remove #(= data %) xs))))
-  (util/edn-xhr
-    {:method :delete
-     :url "classes"
-     :data data
-     :on-complete #()}))
+(defn on-delete [todo category]
+    (om/transact! category :category/todos (fn [xs] (vec (remove #(= todo %) xs))))
+    (util/edn-xhr
+      {:method :delete
+       :url "todos"
+       :data todo
+       :on-complete #()}))
 
-(defn editable [data owner {:keys [edit-key on-edit delete] :as opts}]
+(defn editable [data owner {:keys [edit-key on-edit on-delete] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
       {:editing false})
     om/IRenderState
     (render-state [_ {:keys [editing]}]
-      (let [text (get data edit-key)]
+      (let [text (:todo/name data)]
         (dom/li #js {:className "margin-vertical clearfix"}
           (dom/span #js {:style (display (not editing))
+                         :onClick #(om/set-state! owner :editing true)
                          :className "margin-right-2x"} text)
           (dom/input
             #js {:style (display editing)
@@ -61,59 +65,92 @@
                                 (end-edit text owner on-edit))
                  :onBlur #(when (om/get-state owner :editing)
                              (end-edit text owner on-edit))})
-          (dom/button
-            #js {:className "btn btn-warning margin-horizontal pull-right"
+          (dom/a #js {:href ""}
+          (dom/i
+            #js {:className "fa fa-times pull-right"
                  :style (display (not editing))
-                 :onClick #(on-delete @data delete)} "Remove")
-          (dom/button
-            #js {:className "btn btn-primary margin-horizontal pull-right"
-                 :style (display (not editing))
-                 :onClick #(om/set-state! owner :editing true)} "Edit"))))))
+                 :onClick on-delete})))))))
 
-(defn create-class [app owner]
-  (let [class-id-el   (om/get-node owner "class-id")
-        class-id      (.-value class-id-el)
-        class-name-el (om/get-node owner "class-name")
-        class-name    (.-value class-name-el)
-        new-class     {:class/id class-id :class/title class-name}]
-    (om/transact! app :classes #(conj % new-class) :create)
+(defn create-todo [category owner]
+  (let [todo-name-el (om/get-node owner "todo-name")
+        todo-name    (.-value todo-name-el)
+        todo     {:todo/name todo-name}]
+    (om/transact! category :category/todos #(conj % todo) :create)
+    (util/edn-xhr
+      {:method :put
+       :url "categories"
+       :data (update-in category [:category/todos] #(conj % todo))
+       :on-complete #()})
+    (set! (.-value todo-name-el) "")))
+
+(defn todos-view [category owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:id "todos"}
+        (apply dom/ul nil
+          (map
+            (fn [todo]
+              (om/build editable todo
+                {:opts {:edit-key :todo/name
+                        :on-edit #(on-edit todo %)
+                        :on-delete #(on-delete todo category)}}))
+            (:category/todos category)))
+        (dom/form nil
+          (dom/div #js {:className "form-group"}
+            (dom/label #js {:className "sr-only"} "Todo name:")
+            (dom/input #js {:className "form-control"
+                            :ref "todo-name"
+                            :placeholder "Add todo"}))
+          (dom/button #js {:type "button"
+                           :className "btn btn-primary"
+                           :onClick #(create-todo category owner)}
+                      "Add todo"))))))
+
+(defn create-category [categories owner]
+  (let [category-name-el (om/get-node owner "category-name")
+        category-name (.-value category-name-el)
+        category {:category/name category-name}]
+    (om/transact! categories #(conj % category))
     (util/edn-xhr
       {:method :post
-       :url "classes"
-       :data new-class
+       :url "categories"
+       :data category
        :on-complete #()})
-    (set! (.-value class-id-el) "")
-    (set! (.-value class-name-el) "")))
+    (set! (.-value category-name-el) "")))
 
-(defn classes-view [app owner]
+(defn delete-category [category]
+  (om/transact! (categories) (fn [xs] (vec (remove #(= category %) xs))))
+  (util/edn-xhr
+    {:method :delete
+     :url "categories"
+     :data category
+     :on-complete #()}))
+
+(defn categories-view [app owner]
   (reify
     om/IRender
     (render [_]
-      (let [xs (om/observe owner (classes))]
-        (dom/div #js {:id "classes"}
-          (dom/h2 nil "Classes")
-          (apply dom/ul nil
-            (map
-              (fn [class]
-                (let [id (:class/id class)]
-                  (om/build editable class
-                    {:opts {:edit-key :class/title
-                            :on-edit #(on-edit id %)}})))
-              xs))
+      (let [xs (om/observe owner (categories))]
+        (dom/div nil
           (dom/div #js {:className "form-group"}
-            (dom/label #js {:className "control-label"} "ID:")
-            (dom/input #js {:className "form-control" :ref "class-id"})
-            (dom/label #js {:className "control-label"} "Name:")
-            (dom/input #js {:className "form-control" :ref "class-name"}))
-          (dom/button #js {:className "btn btn-primary" :onClick #(create-class app owner)} "Add"))))))
-
-(defn count-view [app owner]
-  (reify
-    om/IRender
-    (render [_]
-            (let [xs (om/observe owner (classes))]
-              (dom/div nil
-                       (dom/h2 nil (count xs)))))))
+            (dom/label #js {:className "sr-only"} "Category name:")
+            (dom/input #js {:className "form-control"
+                            :ref "category-name"
+                            :placeholder "Category name"})
+          (dom/button #js {:type "button"
+                           :className "btn btn-primary"
+                           :onClick #(create-category (:categories app) owner)}
+                      "Add category"))
+            (dom/div #js {:className "todos"}
+             (apply dom/ul nil
+              (map (fn [category]
+                  (dom/li #js {:className "todo-card padding"}
+                    (dom/h2 nil (:category/name category)
+                      (dom/a #js {:href ""}
+                        (dom/i #js {:className "fa fa-times pull-right" :onClick #(delete-category category)})))
+                    (om/build todos-view category)))
+                xs))))))))
 
 (defn main-view [app owner]
   (reify
@@ -121,13 +158,12 @@
     (will-mount [_]
       (util/edn-xhr
         {:method :get
-         :url "classes"
-         :on-complete #(om/transact! app :classes (fn [_] %))}))
+         :url "categories"
+         :on-complete #(om/transact! app :categories (fn [_] %))}))
     om/IRender
     (render [_]
       (dom/div nil
-               (om/build classes-view app)
-               (om/build count-view app)))))
+         (om/build categories-view app)))))
 
 (om/root main-view app-state
   {:target (gdom/getElement "app")})

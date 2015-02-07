@@ -1,7 +1,7 @@
 goog.addDependency("base.js", ['goog'], []);
 goog.addDependency("../cljs/core.js", ['cljs.core'], ['goog.string', 'goog.array', 'goog.object', 'goog.string.StringBuffer']);
 goog.addDependency("../cljs/reader.js", ['cljs.reader'], ['cljs.core', 'goog.string']);
-goog.addDependency("../om_async/utils.js", ['om_async.utils'], ['cljs.core', 'goog.events.EventType', 'cljs.reader', 'goog.net.XhrIo', 'goog.events']);
+goog.addDependency("../om_async/util.js", ['om_async.util'], ['cljs.core', 'goog.events.EventType', 'cljs.reader', 'goog.net.XhrIo', 'goog.events']);
 goog.addDependency("../om/dom.js", ['om.dom'], ['cljs.core', 'goog.object']);
 goog.addDependency("../om/core.js", ['om.core'], ['cljs.core', 'goog.dom', 'om.dom', 'goog.ui.IdGenerator']);
 goog.addDependency("../cljs/core/async/impl/protocols.js", ['cljs.core.async.impl.protocols'], ['cljs.core']);
