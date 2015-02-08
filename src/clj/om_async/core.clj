@@ -18,9 +18,12 @@
 (defn index []
   (file-response "public/html/index.html" {:root "resources"}))
 
+(defn new-date-time []
+  (java.util.Date.))
+
 (defn merge-tempid [x]
-  ;(update-in x [:todo/startDate] #(t/date-time %))
-  (merge {:db/id (d/tempid :db.part/user)} x))
+  (let [x (assoc x :todo/startDate (java.util.Date.))]
+  (merge {:db/id (d/tempid :db.part/user)} x)))
 
 (defn create [data]
   (let [data (merge-tempid data)]
@@ -37,6 +40,7 @@
 
 (defn update-category [category]
   (let [category (update-in category [:category/todos] #(map merge-tempid %))]
+    (println category)
     (update category)))
 
 (defn todo-to-edn [db id]

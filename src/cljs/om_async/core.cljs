@@ -71,7 +71,8 @@
 (defn create-todo [category owner]
   (let [todo-name-el (om/get-node owner "todo-name")
         todo-name    (.-value todo-name-el)
-        todo     {:todo/name todo-name :todo/startDate (.unix (js/moment))}
+        todo     {:todo/name todo-name
+                  :todo/startDate (.format (js/moment) "YYYY-MM-DDTHH:mm:ss")}
         category (dissoc category :active)]
     (om/transact! category :category/todos #(vec (conj % todo)) :create)
     (util/edn-xhr
@@ -81,7 +82,8 @@
        :on-complete #()})
     (set! (.-value todo-name-el) "")))
 
-(defn set-active-category [categories category]
+(defn set-active-category [owner categories category]
+  (om/set-state! owner :creating-category false)
   (om/transact! categories (fn [xs]
     (vec (map #(if (= category %)
        (assoc % :active true)
@@ -95,28 +97,40 @@
      :data category
      :on-complete #()}))
 
-(defn category-tabs-view [categories]
+(defn category-tabs-view [owner categories]
     (conj (map (fn [category]
         (dom/li #js {:className "tab btn btn-primary"
-                     :onClick #(set-active-category categories category)}
+                     :onClick #(set-active-category owner categories category)}
           (dom/span nil (:category/name category)
             (dom/i #js {:className "fa fa-times pull-right"
                         :onClick #(delete-category category)}))))
        categories)
-      (dom/li #js {:className "tab btn btn-primary"}
-        (dom/span nil "Create category")
-          (dom/i #js {:className "fa fa-plus pull-right"
-                      :onClick #()}))))
+      (dom/li #js {:className "tab btn btn-success"
+                   :onClick #(om/set-state! owner :creating-category true)}
+          (dom/i #js {:className "fa fa-plus"}))))
 
 (defn todos-view [categories owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_]
+      {:creating-category false})
+    om/IRenderState
+    (render-state [_ {:keys [creating-category]}]
       (let [category (first (filter #(contains? % :active) categories))]
         (dom/div #js {:className "todos-wrap"}
           (dom/div #js {:className "tabs"}
-           (apply dom/ul nil (category-tabs-view categories)))
-          (dom/div #js {:id "todos" :className "todos"}
+           (apply dom/ul nil (category-tabs-view owner categories)))
+          (dom/div #js {:style (display creating-category)}
+            (dom/form #js {:className "form"}
+              (dom/div #js {:className "form-group has-feedback"}
+                (dom/label #js {:className "sr-only"} "Category name:")
+                (dom/input #js {:className "form-control"
+                                :ref "category-name"
+                                :onBlur #(create-category category owner)
+                                :placeholder "Add category"}))))
+          (dom/div #js {:id "todos"
+                        :className "todos"
+                        :style (display (not creating-category))}
             (apply dom/ul nil
               (map
                 (fn [todo]
@@ -138,13 +152,13 @@
         category-name (.-value category-name-el)
         category {:category/name category-name}]
     (om/transact! categories #(conj % category))
+    (om/set-state! owner :creating-category false)
     (util/edn-xhr
       {:method :post
        :url "categories"
        :data category
        :on-complete #()})
     (set! (.-value category-name-el) "")))
-
 
 (defn categories-view [app owner]
   (reify
