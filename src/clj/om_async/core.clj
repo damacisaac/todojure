@@ -5,7 +5,9 @@
             [ring.middleware.edn :refer [wrap-edn-params]]
             [compojure.core :refer [defroutes GET PUT POST DELETE]]
             [compojure.route :as route]
-            [compojure.handler :as handler]))
+            [compojure.handler :as handler]
+            [clj-time.core :as t]
+            [clj-time.format :as f]))
 
 (use '[datomic.api :only [q db] :as d])
 
@@ -17,6 +19,7 @@
   (file-response "public/html/index.html" {:root "resources"}))
 
 (defn merge-tempid [x]
+  ;(update-in x [:todo/startDate] #(t/date-time %))
   (merge {:db/id (d/tempid :db.part/user)} x))
 
 (defn create [data]
@@ -29,7 +32,7 @@
   (util/generate-response {:status :ok}))
 
 (defn update [params]
-  (d/transact conn [params])
+  (println (d/transact conn [params]))
   (util/generate-response {:status :ok :data params}))
 
 (defn update-category [category]

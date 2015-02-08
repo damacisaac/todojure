@@ -1,6 +1,5 @@
 (ns om-async.core
   (:require [om-async.util :as util]
-            [cljs.reader :as reader]
             [cljs.core.async :refer [put! chan <!]]
             [goog.dom :as gdom]
             [om.core :as om :include-macros true]
@@ -72,7 +71,7 @@
 (defn create-todo [category owner]
   (let [todo-name-el (om/get-node owner "todo-name")
         todo-name    (.-value todo-name-el)
-        todo     {:todo/name todo-name :todo/startDate (.format (js/moment))}
+        todo     {:todo/name todo-name :todo/startDate (.unix (js/moment))}
         category (dissoc category :active)]
     (om/transact! category :category/todos #(vec (conj % todo)) :create)
     (util/edn-xhr

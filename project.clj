@@ -16,10 +16,12 @@
                  [om-sync "0.1.1"]
                  [compojure "1.1.6" :exclusions [org.clojure/tools.nrepl]]
                  [fogus/ring-edn "0.2.0"]
-                 [com.datomic/datomic-free "0.9.4699"]]
+                 [com.datomic/datomic-free "0.9.4699"]
+                 [clj-time "0.9.0"]]
 
   :plugins [[lein-cljsbuild "1.0.2"]
-            [lein-ring "0.8.10"]]
+            [lein-ring "0.8.10"]
+            [cider/cider-nrepl "0.9.0-SNAPSHOT"]]
 
   :ring {:handler om-async.core/app
            :nrepl {:start? true
