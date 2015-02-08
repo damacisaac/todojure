@@ -1,0 +1,15 @@
+.categories {
+  display: inline-block;
+  width: 70%;
+  height: 50%;
+  padding: 10px;
+}
+.category-card {
+  height: 100%;
+}
+.category-card {
+  display: inline-block;
+  width: 300px;
+  vertical-align: top;
+  overflow-y: scroll;
+}

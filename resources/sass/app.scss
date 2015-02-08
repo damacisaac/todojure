@@ -1,17 +1,33 @@
 @import 'base';
 
-* {
-  border: 1px solid #eee;
-}
-html, body {
+html,
+body,
+.content,
+.content > div {
   height: 100%;
+  background-color: $gray;
+}
+.content {
+  padding: 10px;
 }
 ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
-h2 {
+h1, h2, h3 {
   margin: 0;
+}
+.btn:focus,
+.form-control:focus {
+  outline: none;
+  box-shadow: none;
+  border: 1px solid $gray;
+}
+.form-control {
+  border-radius: 0;
+}
+h1, h2, h3, h4, h5, span, li, p, input, textarea, label {
+  color: $dark-gray;
 }
 
