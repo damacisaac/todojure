@@ -8,14 +8,13 @@
 
 (enable-console-print!)
 
+(def hours-of-day (map #(str % ":00") (range 1 25)))
+
 (def app-state
   (atom {:categories []}))
 
 (defn categories []
   (om/ref-cursor (:categories (om/root-cursor app-state))))
-
-(defn todos [category]
-  (om/ref-cursor (:category/todos category)))
 
 (defn display [show]
   (if show
@@ -33,7 +32,7 @@
   (util/edn-xhr
     {:method :put
      :url "todos"
-     :data {:db/id (:db/id todo) :todo/name name}
+     :data (assoc todo :todo/name name)
      :on-complete #()}))
 
 (defn on-delete [todo category]
@@ -52,7 +51,7 @@
     om/IRenderState
     (render-state [_ {:keys [editing]}]
       (let [text (:todo/name data)]
-        (dom/li #js {:className "margin-vertical clearfix"}
+        (dom/li #js {:className "margin-vertical"}
           (dom/span #js {:style (display (not editing))
                          :onClick #(om/set-state! owner :editing true)
                          :className "margin-right-2x"} text)
@@ -65,47 +64,75 @@
                                 (end-edit text owner on-edit))
                  :onBlur #(when (om/get-state owner :editing)
                              (end-edit text owner on-edit))})
-          (dom/a #js {:href ""}
           (dom/i
             #js {:className "fa fa-times pull-right"
                  :style (display (not editing))
-                 :onClick on-delete})))))))
+                 :onClick on-delete}))))))
 
 (defn create-todo [category owner]
   (let [todo-name-el (om/get-node owner "todo-name")
         todo-name    (.-value todo-name-el)
-        todo     {:todo/name todo-name}]
-    (om/transact! category :category/todos #(conj % todo) :create)
+        todo     {:todo/name todo-name :todo/startDate (.format (js/moment))}
+        category (dissoc category :active)]
+    (om/transact! category :category/todos #(vec (conj % todo)) :create)
     (util/edn-xhr
       {:method :put
        :url "categories"
-       :data (update-in category [:category/todos] #(conj % todo))
+       :data (update-in category [:category/todos] #(vec (conj % todo)))
        :on-complete #()})
     (set! (.-value todo-name-el) "")))
 
-(defn todos-view [category owner]
+(defn set-active-category [categories category]
+  (om/transact! categories (fn [xs]
+    (vec (map #(if (= category %)
+       (assoc % :active true)
+       (dissoc % :active)) xs)))))
+
+(defn delete-category [category]
+  (om/transact! (categories) (fn [xs] (vec (remove #(= category %) xs))))
+  (util/edn-xhr
+    {:method :delete
+     :url "categories"
+     :data category
+     :on-complete #()}))
+
+(defn category-tabs-view [categories]
+    (conj (map (fn [category]
+        (dom/li #js {:className "tab btn btn-primary"
+                     :onClick #(set-active-category categories category)}
+          (dom/span nil (:category/name category)
+            (dom/i #js {:className "fa fa-times pull-right"
+                        :onClick #(delete-category category)}))))
+       categories)
+      (dom/li #js {:className "tab btn btn-primary"}
+        (dom/span nil "Create category")
+          (dom/i #js {:className "fa fa-plus pull-right"
+                      :onClick #()}))))
+
+(defn todos-view [categories owner]
   (reify
     om/IRender
     (render [_]
-      (dom/div #js {:id "todos"}
-        (apply dom/ul nil
-          (map
-            (fn [todo]
-              (om/build editable todo
-                {:opts {:edit-key :todo/name
-                        :on-edit #(on-edit todo %)
-                        :on-delete #(on-delete todo category)}}))
-            (:category/todos category)))
-        (dom/form nil
-          (dom/div #js {:className "form-group"}
-            (dom/label #js {:className "sr-only"} "Todo name:")
-            (dom/input #js {:className "form-control"
-                            :ref "todo-name"
-                            :placeholder "Add todo"}))
-          (dom/button #js {:type "button"
-                           :className "btn btn-primary"
-                           :onClick #(create-todo category owner)}
-                      "Add todo"))))))
+      (let [category (first (filter #(contains? % :active) categories))]
+        (dom/div #js {:className "todos-wrap"}
+          (dom/div #js {:className "tabs"}
+           (apply dom/ul nil (category-tabs-view categories)))
+          (dom/div #js {:id "todos" :className "todos"}
+            (apply dom/ul nil
+              (map
+                (fn [todo]
+                  (om/build editable todo
+                    {:opts {:edit-key :todo/name
+                            :on-edit #(on-edit todo %)
+                            :on-delete #(on-delete todo category)}}))
+                (:category/todos category)))
+            (dom/form #js {:className "form"}
+              (dom/div #js {:className "form-group has-feedback"}
+                (dom/label #js {:className "sr-only"} "Todo name:")
+                (dom/input #js {:className "form-control"
+                                :ref "todo-name"
+                                :onBlur #(create-todo category owner)
+                                :placeholder "Add todo"})))))))))
 
 (defn create-category [categories owner]
   (let [category-name-el (om/get-node owner "category-name")
@@ -119,38 +146,39 @@
        :on-complete #()})
     (set! (.-value category-name-el) "")))
 
-(defn delete-category [category]
-  (om/transact! (categories) (fn [xs] (vec (remove #(= category %) xs))))
-  (util/edn-xhr
-    {:method :delete
-     :url "categories"
-     :data category
-     :on-complete #()}))
 
 (defn categories-view [app owner]
   (reify
     om/IRender
     (render [_]
-      (let [xs (om/observe owner (categories))]
-        (dom/div nil
-          (dom/div #js {:className "form-group"}
-            (dom/label #js {:className "sr-only"} "Category name:")
-            (dom/input #js {:className "form-control"
-                            :ref "category-name"
-                            :placeholder "Category name"})
-          (dom/button #js {:type "button"
-                           :className "btn btn-primary"
-                           :onClick #(create-category (:categories app) owner)}
-                      "Add category"))
-            (dom/div #js {:className "todos"}
-             (apply dom/ul nil
-              (map (fn [category]
-                  (dom/li #js {:className "todo-card padding"}
-                    (dom/h2 nil (:category/name category)
-                      (dom/a #js {:href ""}
-                        (dom/i #js {:className "fa fa-times pull-right" :onClick #(delete-category category)})))
-                    (om/build todos-view category)))
-                xs))))))))
+      (dom/div #js {:className "categories"}
+       (om/build todos-view (:categories app))))))
+
+(defn notes-view [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:className "notes-wrap"}
+        (dom/div #js {:className "notes"}
+          (dom/div #js {:className "tab bg-primary"}
+            (dom/span nil "Daily Notes"))
+           (dom/form #js {:className "form"}
+            (dom/div #js {:className "form-group"}
+              (dom/label #js {:className "sr-only"} "Notes")
+               (dom/textarea #js {:className "form-control"} ))))))))
+
+(defn calendar-view [app owner]
+  (reify
+    om/IRender
+    (render [_]
+        (dom/div #js {:className "calendar"}
+          (dom/div #js {:className "tab bg-primary"}
+            (dom/span nil "Daily Todos"))
+          (dom/div #js {:className "table-wrap"}
+            (dom/table nil
+             (dom/tr nil
+              (apply dom/td #js {:className "table-times"} (map #(dom/div #js {:className "table-cell time"} %) hours-of-day))
+              (apply dom/td #js {:className "table-todos"} (map (fn [_] (dom/div #js {:className "table-cell"} "hi")) hours-of-day)))))))))
 
 (defn main-view [app owner]
   (reify
@@ -159,11 +187,15 @@
       (util/edn-xhr
         {:method :get
          :url "categories"
-         :on-complete #(om/transact! app :categories (fn [_] %))}))
+         :on-complete (fn [categories]
+                        (let [categories (assoc categories 0 (assoc (first categories) :active true))]
+                          (om/transact! app :categories (fn [_] categories))))}))
     om/IRender
     (render [_]
       (dom/div nil
-         (om/build categories-view app)))))
+         (om/build categories-view app)
+         (om/build calendar-view app)
+         (om/build notes-view app)))))
 
 (om/root main-view app-state
   {:target (gdom/getElement "app")})
