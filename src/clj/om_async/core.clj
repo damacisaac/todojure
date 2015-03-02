@@ -7,13 +7,22 @@
             [compojure.route :as route]
             [compojure.handler :as handler]
             [clj-time.core :as t]
-            [clj-time.format :as f]))
+            [clj-time.format :as f]
+            [clj-time.coerce :as c]
+            [taoensso.timbre :as timbre]))
+
+(timbre/refer-timbre)
+(timbre/set-config! [:appenders :spit :enabled?] true)
+(timbre/set-config! [:shared-appender-config :spit-filename] "./log/dev.log")
 
 (use '[datomic.api :only [q db] :as d])
 
 (def uri "datomic:free://localhost:4334/om_async")
 
 (def conn (d/connect uri))
+
+(defn date-to-string [d]
+  (f/unparse (f/formatters :date-hour-minute-second) (c/from-date d)))
 
 (defn index []
   (file-response "public/html/index.html" {:root "resources"}))
@@ -22,12 +31,12 @@
   (java.util.Date.))
 
 (defn merge-tempid [x]
-  (let [x (assoc x :todo/startDate (java.util.Date.))]
-  (merge {:db/id (d/tempid :db.part/user)} x)))
+  (merge {:db/id (d/tempid :db.part/user)} x))
 
 (defn create [data]
   (let [data (merge-tempid data)]
-    (d/transact conn [data])
+    (info data)
+    (info (d/transact conn [data]))
     (util/generate-response {:status :ok :data data})))
 
 (defn delete [eid]
@@ -35,18 +44,19 @@
   (util/generate-response {:status :ok}))
 
 (defn update [params]
-  (println (d/transact conn [params]))
+  (info params)
+  (info (d/transact conn [params]))
   (util/generate-response {:status :ok :data params}))
 
 (defn update-category [category]
   (let [category (update-in category [:category/todos] #(map merge-tempid %))]
-    (println category)
     (update category)))
 
 (defn todo-to-edn [db id]
   (let [todo (d/touch (d/entity db id))]
     {:db/id (:db/id todo)
-     :todo/name (:todo/name todo)}))
+     :todo/name (:todo/name todo)
+     :todo/startDate (:todo/startDate todo)}))
 
 (defn category-to-edn [db id]
   (let [category (d/touch (d/entity db id))]
@@ -90,10 +100,9 @@
 
 (defn wrap-log-request [handler]
   (fn [req]
-    (println req)
     (handler req)))
 
 (def app
   (-> routes
-      ; wrap-log-request
+      wrap-log-request
       wrap-edn-params))

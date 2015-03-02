@@ -1,4 +1,4 @@
-(ns om-async.util
+(ns om-async.xhr-util
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.reader :as reader]
             [goog.events :as events])

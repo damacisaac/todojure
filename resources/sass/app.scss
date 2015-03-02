@@ -18,16 +18,15 @@ ul {
 h1, h2, h3 {
   margin: 0;
 }
-.btn:focus,
-.form-control:focus {
-  outline: none;
-  box-shadow: none;
-  border: 1px solid $gray;
-}
-.form-control {
-  border-radius: 0;
-}
 h1, h2, h3, h4, h5, span, li, p, input, textarea, label {
   color: $dark-gray;
+}
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 

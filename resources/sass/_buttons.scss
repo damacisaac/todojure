@@ -1,0 +1,15 @@
+.btn-flat:focus,
+.btn-flat:active,
+.btn-flat:hover,
+.btn-flat {
+  border-radius: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+.btn-flat:focus,
+.btn-flat:active,
+.btn-flat:hover {
+  background-color: $gray;
+}

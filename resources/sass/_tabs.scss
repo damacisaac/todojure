@@ -1,9 +1,8 @@
-.tabs .tab {
-  display: inline-block;
-}
 .tab {
-  border-top-right-radius: 10px;
-  border-top-left-radius: 10px;
+  min-width: 45px;
+  display: inline-block;
+  border-top-right-radius: 2px;
+  border-top-left-radius: 2px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   padding: 5px 10px;

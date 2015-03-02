@@ -6,28 +6,30 @@
 
   :jvm-opts ^:replace ["-Xmx1g" "-server"]
 
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2173"]
-                 [org.clojure/tools.nrepl "0.2.3"]
-                 [ring/ring "1.2.1"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [figwheel "0.2.3-SNAPSHOT"]
+                 [org.clojure/clojurescript "0.0-2850"]
+                 [org.clojure/tools.nrepl "0.2.7"]
+                 [ring/ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.2.1"]
-                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.8.0-rc1"]
                  [om-sync "0.1.1"]
-                 [compojure "1.1.6" :exclusions [org.clojure/tools.nrepl]]
+                 [compojure "1.3.2"]
                  [fogus/ring-edn "0.2.0"]
                  [com.datomic/datomic-free "0.9.4699"]
-                 [clj-time "0.9.0"]]
+                 [com.taoensso/timbre "3.4.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]
-            [lein-ring "0.8.10"]
-            [cider/cider-nrepl "0.9.0-SNAPSHOT"]]
+  :plugins [[lein-cljsbuild "1.0.5"]
+            [lein-ring "0.9.1"]
+            [lein-figwheel "0.2.3-SNAPSHOT"]]
 
-  :ring {:handler om-async.core/app
-           :nrepl {:start? true
-                   :port 8081}}
+  ;:figwheel {:ring-handler om-async.core/app}
+  :ring {:handler om-async.core/app}
+
 
   :source-paths ["src/clj" "src/cljs"]
+
   :resource-paths ["resources"]
 
   :cljsbuild {

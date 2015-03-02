@@ -35,6 +35,9 @@
   height: 42px;
   padding: 5px;
 }
+.calendar td > .table-cell.active {
+  background-color: $gray;
+}
 .calendar .table-times {
   width: 10%;
 }
